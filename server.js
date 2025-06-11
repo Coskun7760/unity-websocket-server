@@ -1,63 +1,53 @@
-// Node.js ve Express.js modüllerini içeri aktar
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws'); // ws kütüphanesini kullanıyoruz
-
-// Express uygulamasını oluştur
+const express = require("express");
 const app = express();
-
-// Render'ın atadığı portu veya varsayılan olarak 8080'i kullan
-// const PORT = process.env.PORT || 8080;
-const PORT = process.env.PORT || 10000; // Render'ın genellikle 10000'i kullandığını gördüğümüz için
-
-// HTTP sunucusu oluştur ve Express uygulamasını bağla
+const http = require("http");
 const server = http.createServer(app);
 
-// WebSocket sunucusunu HTTP sunucusu üzerinde başlat
-const wss = new WebSocket.Server({ server });
-
-// WebSocket sunucusu başlatıldığında
-wss.on('listening', () => {
-  console.log(`WebSocket server listening on port ${PORT}`);
-});
-
-// WebSocket bağlantısı kurulduğunda
-wss.on('connection', ws => {
-  console.log('A client just connected'); // Genel bağlantı mesajı
-
-  // İstemciden mesaj alındığında
-  ws.on('message', message => {
-    const msgStr = message.toString();
-    // NEWPEER mesajlarından PeerId'yi çekmeye çalış
-    const parts = msgStr.split('|');
-    const peerId = parts.length > 1 ? parts[1] : 'Unknown-PeerId'; // PeerId'yi çek
-    
-    console.log(`Received message from ${peerId} client: ${msgStr}`);
-
-    // Gelen mesajı, gönderen hariç tüm diğer bağlı istemcilere yayınla (broadcast)
-    // Unity'nin kullandığı bu basit sinyalleşme, bir istemcinin mesajını
-    // genellikle odasındaki diğer tek bir istemciye iletmek yerine
-    // tüm diğer istemcilere gönderir ve istemci tarafta filtrelenir.
-    wss.clients.forEach(function (client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        // console.log(`Relaying message to client ${client.id || 'N/A'}: ${msgStr}`); // Hata ayıklama için
-        client.send(msgStr);
-      }
-    });
-  });
-
-  // Bağlantı kapandığında
-  ws.on('close', () => {
-    console.log("Client disconnected");
-  });
-
-  // Hata oluştuğunda
-  ws.on('error', error => {
-    console.error("WebSocket error:", error);
-  });
-});
-
-// HTTP sunucusunu dinlemeye başla
+// Render için DÜZELTİLDİ: Ortam değişkeninden portu al
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`HTTP server listening on port ${PORT}`);
+    console.log(`HTTP server listening on port ${PORT}`);
+});
+
+app.get("/", (req, res) => res.send('Signal Server Running!'));
+
+const webSocket = require("ws");
+const wss = new webSocket.Server({ server });
+
+// WebSocket sunucusu başladığında logla
+wss.on("listening", () => {
+    console.log(`WebSocket server listening on port ${PORT} (WSS)`);
+});
+
+wss.on("connection", function (socket) {
+    // Some feedback on the console
+    console.log("A client just connected");
+    
+    // Logları takip etmek için bir ID atayalım (Glitch kodunda olmayabilir)
+    socket.id = Math.random().toString(36).substring(2, 15);
+    console.log(`Client ${socket.id} connected.`);
+    
+    socket.on("message", function (msg) {
+        const msgStr = msg.toString();
+        const parts = msgStr.split('|');
+        const peerId = parts.length > 1 ? parts[1] : 'Unknown-PeerId'; // Hata önleme
+        console.log("Received message from " + peerId  + " client: " + msg);
+        
+        // Broadcast that message to all connected clients except sender
+        wss.clients.forEach(function (client) {
+            // Sadece bağlantısı açık olanlara gönder
+            if (client !== socket && client.readyState === webSocket.OPEN) {
+                client.send(msg);
+            }
+        });
+    });
+
+    socket.on("close", function () {
+        console.log(`Client ${socket.id} disconnected`); // ID'yi loga ekle
+    });
+
+    // Hata yakalama ekle (Glitch kodunda olmayabilir)
+    socket.on("error", function (error) {
+        console.error(`WebSocket error for client ${socket.id}:`, error);
+    });
 });
