@@ -1,14 +1,24 @@
 {
-  "name": "my-websocket-server",
-  "version": "1.0.0",
-  "description": "Simple WebSocket server for Unity",
+  "name": "unity-webrtc-signaling",
+  "version": "0.1.0",
+  "description": "Websocket server for signaling WebRTC",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "ws": "^8.16.0"
+    "ws": "^8.18.0",
+    "express": "^4.21.2"
   },
-  "author": "Your Name",
-  "license": "MIT"
+  "engines": {
+    "node": "14.x"
+  },
+  "repository": {
+    "url": "https://github.com/Coskun7760/unity-websocket-server.git" 
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch"
+  ]
 }
