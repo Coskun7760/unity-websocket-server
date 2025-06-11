@@ -7,7 +7,8 @@ const WebSocket = require('ws'); // ws kütüphanesini kullanıyoruz
 const app = express();
 
 // Render'ın atadığı portu veya varsayılan olarak 8080'i kullan
-const PORT = process.env.PORT || 8080;
+// const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000; // Render'ın genellikle 10000'i kullandığını gördüğümüz için
 
 // HTTP sunucusu oluştur ve Express uygulamasını bağla
 const server = http.createServer(app);
